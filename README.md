@@ -86,6 +86,7 @@ Use n8n’s **Credential Manager** to store them securely.
 ![Workflow Screenshot](screenshots/daily-digest-flow3.png)
 ![Workflow Screenshot](screenshots/daily-digest-flow4.png)
 ![Workflow Screenshot](screenshots/daily-digest-flow5.png)
+![Workflow Screenshot](screenshots/daily-digest-flow6.png)
 
 ---
 
