@@ -1,0 +1,258 @@
+{
+  "name": "My workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 7
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "b8361521-317d-4a64-a5e8-7217b0a59cf2",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "url": "https://hn.algolia.com/api/v1/search?query=AI&tags=story",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        208,
+        0
+      ],
+      "id": "3684f116-e729-4b15-92db-8c1101b972fd",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "jsCode": "const hits = $input.first().json.hits;\n\nreturn hits.slice(0, 5).map(item => ({\n  json: {\n    title: item.title,\n    url: item.url,\n    author: item.author\n  }\n}));\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        416,
+        0
+      ],
+      "id": "0d77fb5f-3749-48d1-8d3d-d5f7d78a92e5",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-1.5-flash-latest",
+          "mode": "list",
+          "cachedResultName": "models/gemini-1.5-flash-latest"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=Summarize the following set of articles. Each article is separated by a line of dashes:\n\n{{ $json.all_articles }}"
+            }
+          ]
+        },
+        "simplify": false,
+        "jsonOutput": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1,
+      "position": [
+        1040,
+        0
+      ],
+      "id": "508ab96f-880e-404c-967a-5ec23f533dab",
+      "name": "Message a model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "fcvvlyZlkP8VcE4t",
+          "name": "Google Gemini(PaLM) Api account 4"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.firecrawl.dev/v1/scrape",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer fc-1a9a8bd0c9d3440d9548ea9ed17c1fb6"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"url\": \"{{ $json.url }}\"\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        624,
+        0
+      ],
+      "id": "a74ad73c-cbe3-416d-98a6-ed998c04797b",
+      "name": "HTTP Request1"
+    },
+    {
+      "parameters": {
+        "jsCode": "const cleanedArticles = items.map(item => {\n  const raw = item.json.extracted_text || item.json.data?.markdown || \"\";\n  const clean = raw\n    .replace(/\\[([^\\]]+)\\]\\([^)]+\\)/g, '$1') // remove markdown links\n    .replace(/#+\\s*/g, '') // remove headers\n    .replace(/\\*\\*/g, '') // remove bold\n    .replace(/\\n{2,}/g, '\\n') // collapse newlines\n    .trim();\n\n  return clean;\n});\n\nconst combined = cleanedArticles.join('\\n\\n' + '-'.repeat(80) + '\\n\\n');\n\nreturn [{ json: { all_articles: combined } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        832,
+        0
+      ],
+      "id": "ddd9a21e-16a3-48bb-b293-39f7b78cd198",
+      "name": "Code1"
+    },
+    {
+      "parameters": {
+        "jsCode": "const rawText = items[0]?.json?.candidates?.[0]?.content?.parts?.[0]?.text;\n\nif (!rawText) {\n  throw new Error(\"No Gemini text found at expected path.\");\n}\n\nlet parsed;\ntry {\n  parsed = JSON.parse(rawText);\n} catch (err) {\n  throw new Error(\"Failed to parse Gemini text as JSON.\");\n}\n\nconst articles = parsed.articles;\n\nif (!Array.isArray(articles)) {\n  throw new Error(\"Expected 'articles' array in parsed Gemini output.\");\n}\n\nconst formatted = articles.map((article, index) => {\n  const title = `📰 Article ${index + 1}: ${article.title || \"Untitled\"}`;\n  const author = article.author ? `✍️ Author: ${article.author}` : '';\n  const date = article.date ? `📅 Date: ${article.date}` : '';\n  const summary = article.summary || 'No summary available.';\n\n  return `${title}\\n${author}\\n${date}\\n\\n${summary}`;\n}).join('\\n\\n' + '-'.repeat(60) + '\\n\\n');\n\nreturn [{ json: { digest: formatted } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1392,
+        0
+      ],
+      "id": "fd311979-8964-4a55-b9b8-2b1eb1aef856",
+      "name": "Code2"
+    },
+    {
+      "parameters": {
+        "fromEmail": "selenophile.solitude@gmail.com",
+        "toEmail": "22nn1a4205@gmail.com",
+        "subject": "=🗞️ Daily Digest - {{ $now.format(\"DD MMM YYYY\") }}",
+        "emailFormat": "text",
+        "text": "={{ $json.digest }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        1600,
+        0
+      ],
+      "id": "74f2c38d-03c8-4fb5-b627-7495f0e9da63",
+      "name": "Send email",
+      "webhookId": "5196790b-62b6-4d52-9276-d78f83c28822",
+      "credentials": {
+        "smtp": {
+          "id": "DKl5JxWKuKw0sDuQ",
+          "name": "SMTP account 2"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request1": {
+      "main": [
+        [
+          {
+            "node": "Code1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code1": {
+      "main": [
+        [
+          {
+            "node": "Message a model",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model": {
+      "main": [
+        [
+          {
+            "node": "Code2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code2": {
+      "main": [
+        [
+          {
+            "node": "Send email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "915fb729-71b6-48c5-9b02-8b97f6a105db",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "48a89324d33fef84cab84979e8854806065808763392cbe38138bc21a32ec739"
+  },
+  "id": "AZMFhWBp0fPl4twJ",
+  "tags": []
+}
