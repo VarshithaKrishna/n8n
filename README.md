@@ -81,12 +81,12 @@ Use n8n’s **Credential Manager** to store them securely.
 ---
 
 ## 📸 Screenshots
-![Workflow Screenshot](screenshots/daily-digest-flow1.png)
-![Workflow Screenshot](screenshots/daily-digest-flow2.png)
-![Workflow Screenshot](screenshots/daily-digest-flow3.png)
-![Workflow Screenshot](screenshots/daily-digest-flow4.png)
-![Workflow Screenshot](screenshots/daily-digest-flow5.png)
-![Workflow Screenshot](screenshots/daily-digest-flow6.png)
+![Workflow Screenshot](screenshots/screenshotsdaily-digest-flow1.png)
+![Workflow Screenshot](screenshots/screenshotsdaily-digest-flow2.png)
+![Workflow Screenshot](screenshots/screenshotsdaily-digest-flow3.png)
+![Workflow Screenshot](screenshots/screenshotsdaily-digest-flow4.png)
+![Workflow Screenshot](screenshots/screenshotsdaily-digest-flow5.png)
+![Workflow Screenshot](screenshots/screenshotsdaily-digest-flow6.png)
 
 ---
 
