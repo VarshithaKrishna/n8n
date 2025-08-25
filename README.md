@@ -2,9 +2,8 @@
 # 📰 n8n Daily Digest Agent
 
 This project automates the extraction, summarization, and logging of daily news articles using **n8n**, triggered every day at **7:00 AM IST**. It integrates tools like **Firecrawl**, **Gemini**, and the **Notion API** to build a modular, scalable agent workflow.
-
----
 This n8n workflow automatically extracts and summarizes the latest flash tech news every morning at 7:00 AM IST, then delivers a clean, digest-style email straight to your inbox. It uses Firecrawl for content extraction, Gemini for summarization, and formats the output into a readable daily briefing — no fluff, just fast-moving updates from the tech frontier.
+---
 ---
 
 ## 🚀 Features
